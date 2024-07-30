@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Enable strict mode:
+set -euo pipefail
+
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "~ Configure agent node                                                            ~"
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+
+# echo "Run the installer..."
+# curl -sfL https://get.rke2.io | sh -
+
+echo "Enable rke2-server.service..."
+systemctl enable rke2-agent.service
+
+mkdir -p /etc/rancher/rke2/

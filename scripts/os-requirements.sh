@@ -18,13 +18,19 @@ sed -e '/swap/s/^/#/g' -i /etc/fstab
 echo "Disabling firewalld..."
 systemctl disable --now firewalld
 
+echo "Tell NetworkManager to ignore calico/flannel-related network interfaces"
+cat <<EOF > /etc/NetworkManager/conf.d/rke2-canal.conf
+[keyfile]
+unmanaged-devices=interface-name:cali*;interface-name:flannel*
+EOF
+
 echo "Setting iptables for bridged network traffic..."
 cat <<EOF >  /etc/sysctl.d/01-k8s.conf
 net.bridge.bridge-nf-call-iptables = 1
 EOF
 
 echo "Enabling IP forwarding..."
-cat <<EOF > /etc/sysctl.d/02-fwd.conf
+cat <<EOF > /etc/sysctl.d/90-rke2.conf
 net.ipv4.conf.all.forwarding=1
 EOF
 
