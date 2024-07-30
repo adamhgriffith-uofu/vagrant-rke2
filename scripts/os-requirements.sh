@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Enable strict mode:
+set -euo pipefail
+
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "~ Apply OS Requirements                                                           ~"
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+
+echo "Setting SELinux to disabled mode..."
+setenforce 0
+sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+
+echo "Disabling swap..."
+swapoff -a
+sed -e '/swap/s/^/#/g' -i /etc/fstab
+
+echo "Disabling firewalld..."
+systemctl disable --now firewalld
+
+echo "Setting iptables for bridged network traffic..."
+cat <<EOF >  /etc/sysctl.d/01-k8s.conf
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+
+echo "Enabling IP forwarding..."
+cat <<EOF > /etc/sysctl.d/02-fwd.conf
+net.ipv4.conf.all.forwarding=1
+EOF
+
+echo "Configuring eth1..."
+cat <<EOF > /etc/sysconfig/network-scripts/ifcfg-eth1
+TYPE=Ethernet
+PROXY_METHOD=none
+BROWSER_ONLY=no
+BOOTPROTO=none
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+NAME=eth1
+DEVICE=eth1
+ONBOOT=yes
+IPADDR=${IPV4_ADDR}
+PREFIX=${IPV4_MASK}
+GATEWAY=${IPV4_GW}
+DNS1=155.101.3.11
+DOMAIN="${SEARCH_DOMAINS}"
+ZONE=public
+EOF
+
+echo "Applying changes..."
+sysctl --system
+systemctl restart NetworkManager
