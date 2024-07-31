@@ -25,28 +25,7 @@ cat <<EOF > /etc/sysctl.d/90-rke2.conf
 net.ipv4.conf.all.forwarding=1
 EOF
 
-# echo "Configuring eth1..."
-# cat <<EOF > /etc/sysconfig/network-scripts/ifcfg-eth1
-# TYPE=Ethernet
-# PROXY_METHOD=none
-# BROWSER_ONLY=no
-# BOOTPROTO=none
-# DEFROUTE=yes
-# IPV4_FAILURE_FATAL=no
-# NAME=eth1
-# DEVICE=eth1
-# ONBOOT=yes
-# IPADDR=${IPV4_ADDR}
-# PREFIX=${IPV4_MASK}
-# GATEWAY=${IPV4_GW}
-# DNS1=155.101.3.11
-# DOMAIN="${SEARCH_DOMAINS}"
-# ZONE=public
-# EOF
-
-# nmcli connection migrate
-
-echo "Configuring eth1..."
+echo "Configuring bridge NetworkManager connection..."
 cat <<EOF > /etc/NetworkManager/system-connections/eth1.nmconnection
 [connection]
 id=eth1

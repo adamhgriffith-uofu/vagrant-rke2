@@ -10,10 +10,17 @@ echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # echo "Run the installer..."
 # curl -sfL https://get.rke2.io | sh -
 
-echo "Enable and start rke2-server.service..."
+echo "Enable and start the rke2-server service..."
 systemctl enable rke2-server.service
 systemctl start rke2-server.service
-systemctl status rke2-server.service
+echo $(systemctl status rke2-server.service)
 
-echo "TEMPORARY: Copying kubeconfig (admin.conf) to /vagrant_work..."
-cp -i /etc/rancher/rke2/rke2.yaml /vagrant_work/admin.conf
+echo "TEMPORARY: Copying kubeconfig (rke2.yaml) to /vagrant_work..."
+cp /etc/rancher/rke2/rke2.yaml /vagrant_work/rke2.yaml
+
+echo "Copying registration token to /vagrant_work..."
+cp /var/lib/rancher/rke2/server/node-token /vagrant_work/node-token
+
+echo "Quality of life for root user CLI access..."
+echo "export KUBECONFIG=/etc/rancher/rke2/rke2.yaml" >> /root/.bashrc
+echo 'PATH=/var/lib/rancher/rke2/bin/:$PATH' >> /root/.bashrc

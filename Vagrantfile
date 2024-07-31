@@ -60,12 +60,22 @@ Vagrant.configure("2") do |config|
         vb.gui = false
 
         # Customize the amount of memory on the VM:
-        vb.memory = 12288
+        vb.memory = 8192
 
         # Customize the name that appears in the VirtualBox GUI:
         vb.name = server['name']
       end
-    
+      
+      if index < 1
+        # Perform housekeeping on `vagrant destroy` of the control-plane (a.k.a. master) node..
+        node.trigger.before :destroy do |trigger|
+          trigger.warn = "Performing housekeeping before starting destroy..."
+          trigger.run_remote = {
+            path: "./scripts/cluster/housekeeping.sh"
+          }
+        end
+      end
+
       # Provision with shell scripts.
       node.vm.provision "shell" do |script|
         script.env = {
@@ -79,7 +89,7 @@ Vagrant.configure("2") do |config|
 
       node.vm.provision "shell",
         name: 'Disable NAT router',
-        run: "always",
+        # run: "always",
         # Don't want NAT routes, only bridged routes so need to disable this.
         inline: "ip route del default via 10.0.2.2 dev eth0 proto dhcp metric 100"
 
@@ -105,7 +115,9 @@ Vagrant.configure("2") do |config|
         end
 
         node.vm.provision "shell" do |script|
-          script.env = {}
+          script.env = {
+            RKE2_SERVER: servers[0]['name']
+          }
           script.path = "./scripts/cluster/agent.sh"
           script.privileged = true
         end

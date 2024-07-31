@@ -13,4 +13,16 @@ echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo "Enable rke2-server.service..."
 systemctl enable rke2-agent.service
 
+echo "Gathering node-token..."
+NODE_TOKEN=$(< /vagrant_work/node-token)
+
+echo "Configuring the rke2-agent service..."
 mkdir -p /etc/rancher/rke2/
+cat <<EOF > /etc/rancher/rke2/config.yaml
+server: https://${RKE2_SERVER}:9345
+token: ${NODE_TOKEN}
+EOF
+
+echo "Starting the rke2-agent service..."
+systemctl start rke2-agent.service
+echo $(systemctl status rke2-agent.service)
