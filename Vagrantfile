@@ -45,9 +45,6 @@ Vagrant.configure("2") do |config|
       node.vm.box_version = "202404.23.0"
       node.vm.hostname = server['name']
 
-      # Create a bridged network adaptor.
-      node.vm.network "public_network", auto_config: false
-
       # VirtualBox Provider
       node.vm.provider "virtualbox" do |vb|
         # Customize the number of CPUs on the VM:
@@ -86,12 +83,6 @@ Vagrant.configure("2") do |config|
         }
         script.path = "./scripts/os-requirements.sh"
       end
-
-      node.vm.provision "shell",
-        name: 'Disable NAT router',
-        # run: "always",
-        # Don't want NAT routes, only bridged routes so need to disable this.
-        inline: "ip route del default via 10.0.2.2 dev eth0 proto dhcp metric 100"
 
       if index < 1 # The server node(s)
         node.vm.provision "shell" do |script|
