@@ -11,9 +11,9 @@ echo "Setting SELinux to disabled mode..."
 setenforce 0
 sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
 
-echo "Disabling swap..."
-swapoff -a
-sed -e '/swap/s/^/#/g' -i /etc/fstab
+# echo "Disabling swap..."
+# swapoff -a
+# sed -e '/swap/s/^/#/g' -i /etc/fstab
 
 echo "Disabling firewalld..."
 systemctl disable --now firewalld
@@ -24,10 +24,10 @@ cat <<EOF > /etc/NetworkManager/conf.d/rke2-canal.conf
 unmanaged-devices=interface-name:cali*;interface-name:flannel*
 EOF
 
-echo "Setting iptables for bridged network traffic..."
-cat <<EOF >  /etc/sysctl.d/01-k8s.conf
-net.bridge.bridge-nf-call-iptables = 1
-EOF
+# echo "Setting iptables for bridged network traffic..."
+# cat <<EOF >  /etc/sysctl.d/01-k8s.conf
+# net.bridge.bridge-nf-call-iptables = 1
+# EOF
 
 echo "Enabling IP forwarding..."
 cat <<EOF > /etc/sysctl.d/90-rke2.conf
@@ -53,6 +53,31 @@ DOMAIN="${SEARCH_DOMAINS}"
 ZONE=public
 EOF
 
+# nmcli connection migrate
+
+# echo "Configuring eth1..."
+# cat <<EOF > /etc/NetworkManager/system-connections/eth1.nmconnection
+# [connection]
+# id=eth1
+# type=ethernet
+# interface-name=eth1
+# zone=public
+
+# [ethernet]
+
+# [ipv4]
+# address1=${IPV4_ADDR}/${IPV4_MASK},${IPV4_GW}
+# dns=155.101.3.11;
+# dns-search=${SEARCH_DOMAINS};
+# method=manual
+
+# [ipv6]
+# method=ignore
+
+# [proxy]
+# EOF
+
 echo "Applying changes..."
 sysctl --system
 systemctl restart NetworkManager
+nmcli device reapply eth1

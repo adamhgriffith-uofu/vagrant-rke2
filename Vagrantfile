@@ -60,7 +60,7 @@ Vagrant.configure("2") do |config|
         vb.gui = false
 
         # Customize the amount of memory on the VM:
-        vb.memory = 8192
+        vb.memory = 12288
 
         # Customize the name that appears in the VirtualBox GUI:
         vb.name = server['name']
@@ -77,24 +77,35 @@ Vagrant.configure("2") do |config|
         script.path = "./scripts/os-requirements.sh"
       end
 
-      node.vm.provision "shell"  do |script|
-        script.run: "always",
+      node.vm.provision "shell",
+        name: 'Disable NAT router',
+        run: "always",
         # Don't want NAT routes, only bridged routes so need to disable this.
-        script.inline: "ip route del default via 10.0.2.2 dev eth0 proto dhcp metric 100"
-      end
+        inline: "ip route del default via 10.0.2.2 dev eth0 proto dhcp metric 100"
+      
+        node.vm.provision "shell",
+        name: 'asfdasdfasdfasdf',
+        run: "always",
+        # Don't want NAT routes, only bridged routes so need to disable this.
+        inline: "echo $(ifconfig -a)"
 
       if index < 1 # The server node(s)
-        node.vm.provision "shell" do |script|
-          script.env = {}
-          script.path = "./scripts/cluster/get-rke2.sh"
-          script.privileged = true
-        end
+        node.vm.provision "shell",
+        name: 'Testing curl',
+        run: "always",
+        inline: "curl -sSL https://update.rke2.io/v1-release/channels"
 
-        node.vm.provision "shell" do |script|
-          script.env = {}
-          script.path = "./scripts/cluster/server.sh"
-          script.privileged = true
-        end
+        # node.vm.provision "shell" do |script|
+        #   script.env = {}
+        #   script.path = "./scripts/cluster/get-rke2.sh"
+        #   script.privileged = true
+        # end
+
+        # node.vm.provision "shell" do |script|
+        #   script.env = {}
+        #   script.path = "./scripts/cluster/server.sh"
+        #   script.privileged = true
+        # end
       else # The agent node(s)
         node.vm.provision "shell" do |script|
           script.env = {
