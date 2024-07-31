@@ -11,10 +11,6 @@ echo "Setting SELinux to disabled mode..."
 setenforce 0
 sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
 
-# echo "Disabling swap..."
-# swapoff -a
-# sed -e '/swap/s/^/#/g' -i /etc/fstab
-
 echo "Disabling firewalld..."
 systemctl disable --now firewalld
 
@@ -24,60 +20,59 @@ cat <<EOF > /etc/NetworkManager/conf.d/rke2-canal.conf
 unmanaged-devices=interface-name:cali*;interface-name:flannel*
 EOF
 
-# echo "Setting iptables for bridged network traffic..."
-# cat <<EOF >  /etc/sysctl.d/01-k8s.conf
-# net.bridge.bridge-nf-call-iptables = 1
-# EOF
-
 echo "Enabling IP forwarding..."
 cat <<EOF > /etc/sysctl.d/90-rke2.conf
 net.ipv4.conf.all.forwarding=1
 EOF
 
-echo "Configuring eth1..."
-cat <<EOF > /etc/sysconfig/network-scripts/ifcfg-eth1
-TYPE=Ethernet
-PROXY_METHOD=none
-BROWSER_ONLY=no
-BOOTPROTO=none
-DEFROUTE=yes
-IPV4_FAILURE_FATAL=no
-NAME=eth1
-DEVICE=eth1
-ONBOOT=yes
-IPADDR=${IPV4_ADDR}
-PREFIX=${IPV4_MASK}
-GATEWAY=${IPV4_GW}
-DNS1=155.101.3.11
-DOMAIN="${SEARCH_DOMAINS}"
-ZONE=public
-EOF
+# echo "Configuring eth1..."
+# cat <<EOF > /etc/sysconfig/network-scripts/ifcfg-eth1
+# TYPE=Ethernet
+# PROXY_METHOD=none
+# BROWSER_ONLY=no
+# BOOTPROTO=none
+# DEFROUTE=yes
+# IPV4_FAILURE_FATAL=no
+# NAME=eth1
+# DEVICE=eth1
+# ONBOOT=yes
+# IPADDR=${IPV4_ADDR}
+# PREFIX=${IPV4_MASK}
+# GATEWAY=${IPV4_GW}
+# DNS1=155.101.3.11
+# DOMAIN="${SEARCH_DOMAINS}"
+# ZONE=public
+# EOF
 
 # nmcli connection migrate
 
-# echo "Configuring eth1..."
-# cat <<EOF > /etc/NetworkManager/system-connections/eth1.nmconnection
-# [connection]
-# id=eth1
-# type=ethernet
-# interface-name=eth1
-# zone=public
+echo "Configuring eth1..."
+cat <<EOF > /etc/NetworkManager/system-connections/eth1.nmconnection
+[connection]
+id=eth1
+uuid=9c92fad9-6ecb-3e6c-eb4d-8a47c6f50c04
+type=ethernet
+interface-name=eth1
+zone=public
 
-# [ethernet]
+[ethernet]
 
-# [ipv4]
-# address1=${IPV4_ADDR}/${IPV4_MASK},${IPV4_GW}
-# dns=155.101.3.11;
-# dns-search=${SEARCH_DOMAINS};
-# method=manual
+[ipv4]
+address1=${IPV4_ADDR}/${IPV4_MASK},${IPV4_GW}
+dns=155.101.3.11;
+dns-search=${SEARCH_DOMAINS};
+method=manual
 
-# [ipv6]
-# method=ignore
+[ipv6]
+method=ignore
 
-# [proxy]
-# EOF
+[proxy]
+EOF
+
+chmod 0600 /etc/NetworkManager/system-connections/eth1.nmconnection
+echo $(nmcli connection load /etc/NetworkManager/system-connections/eth1.nmconnection)
+echo $(nmcli connection up filename /etc/NetworkManager/system-connections/eth1.nmconnection)
 
 echo "Applying changes..."
-sysctl --system
+systemctl restart systemd-sysctl
 systemctl restart NetworkManager
-nmcli device reapply eth1

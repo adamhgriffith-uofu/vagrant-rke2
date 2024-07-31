@@ -82,30 +82,19 @@ Vagrant.configure("2") do |config|
         run: "always",
         # Don't want NAT routes, only bridged routes so need to disable this.
         inline: "ip route del default via 10.0.2.2 dev eth0 proto dhcp metric 100"
-      
-        node.vm.provision "shell",
-        name: 'asfdasdfasdfasdf',
-        run: "always",
-        # Don't want NAT routes, only bridged routes so need to disable this.
-        inline: "echo $(ifconfig -a)"
 
       if index < 1 # The server node(s)
-        node.vm.provision "shell",
-        name: 'Testing curl',
-        run: "always",
-        inline: "curl -sSL https://update.rke2.io/v1-release/channels"
+        node.vm.provision "shell" do |script|
+          script.env = {}
+          script.path = "./scripts/cluster/get-rke2.sh"
+          script.privileged = true
+        end
 
-        # node.vm.provision "shell" do |script|
-        #   script.env = {}
-        #   script.path = "./scripts/cluster/get-rke2.sh"
-        #   script.privileged = true
-        # end
-
-        # node.vm.provision "shell" do |script|
-        #   script.env = {}
-        #   script.path = "./scripts/cluster/server.sh"
-        #   script.privileged = true
-        # end
+        node.vm.provision "shell" do |script|
+          script.env = {}
+          script.path = "./scripts/cluster/server.sh"
+          script.privileged = true
+        end
       else # The agent node(s)
         node.vm.provision "shell" do |script|
           script.env = {
