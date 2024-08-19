@@ -13,6 +13,12 @@ ENV['SETTINGS_PATH'] = "./settings.yml"
 settings = YAML.load_file(ENV['SETTINGS_PATH'])
 servers = settings['servers']
 
+# Check for vagrant-hostmanager plugin
+if !Vagrant.has_plugin?('vagrant-hostmanager')
+  puts 'ERROR: vagrant-hostmanager plugin required. To install run `vagrant plugin install vagrant-hostmanager`'
+  abort
+end
+
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -27,6 +33,13 @@ Vagrant.configure("2") do |config|
   if Vagrant.has_plugin?("vagrant-vbguest")
     config.vbguest.auto_update = false
   end
+
+  # Configure the hostmanager plugin.
+  config.hostmanager.enabled = true
+  config.hostmanager.manage_host = true
+  config.hostmanager.manage_guest = true
+  config.hostmanager.ignore_private_ip = false
+  config.hostmanager.include_offline = true
 
   # Display a note when running the machine.
   config.vm.post_up_message = "Remember, switch to root shell before running K8s commands!"
@@ -44,6 +57,9 @@ Vagrant.configure("2") do |config|
       node.vm.box = "bento/rockylinux-9"
       node.vm.box_version = "202404.23.0"
       node.vm.hostname = server['name']
+
+      # Private network
+      node.vm.network "private_network", ip: "192.168.56.1#{index}", netmask: "255.255.255.0"
 
       # VirtualBox Provider
       node.vm.provider "virtualbox" do |vb|
@@ -74,13 +90,9 @@ Vagrant.configure("2") do |config|
       end
 
       # Provision with shell scripts.
+
       node.vm.provision "shell" do |script|
-        script.env = {
-            IPV4_ADDR: server['ipv4'],
-            IPV4_MASK: server['ipv4_mask'],
-            IPV4_GW: server['ipv4_gw'],
-            SEARCH_DOMAINS: server['search_domains']
-        }
+        script.env = {}
         script.path = "./scripts/os-requirements.sh"
       end
 
@@ -88,13 +100,11 @@ Vagrant.configure("2") do |config|
         node.vm.provision "shell" do |script|
           script.env = {}
           script.path = "./scripts/cluster/get-rke2.sh"
-          script.privileged = true
         end
 
         node.vm.provision "shell" do |script|
           script.env = {}
           script.path = "./scripts/cluster/server.sh"
-          script.privileged = true
         end
       else # The agent node(s)
         node.vm.provision "shell" do |script|
@@ -102,7 +112,6 @@ Vagrant.configure("2") do |config|
             INSTALL_RKE2_TYPE: "agent"
           }
           script.path = "./scripts/cluster/get-rke2.sh"
-          script.privileged = true
         end
 
         node.vm.provision "shell" do |script|
@@ -110,7 +119,6 @@ Vagrant.configure("2") do |config|
             RKE2_SERVER: servers[0]['name']
           }
           script.path = "./scripts/cluster/agent.sh"
-          script.privileged = true
         end
       end
     end
