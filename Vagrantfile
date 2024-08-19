@@ -90,6 +90,11 @@ Vagrant.configure("2") do |config|
       end
 
       # Provision with shell scripts.
+      node.vm.provision "shell",
+        name: 'Disable default NAT router',
+        run: "always",
+        # Don't want NAT routes so need to disable this.
+        inline: "ip route del default via 10.0.2.2 dev eth0 proto dhcp metric 100"
 
       node.vm.provision "shell" do |script|
         script.env = {}
